@@ -17,6 +17,11 @@
     { label: "Program dan Materi", path: "pages/programs.html" },
   ];
 
+  const contactEmail = "goklitrenweb@gmail.com";
+  const contactUrl = `mailto:${contactEmail}?subject=${encodeURIComponent(
+    "Pertanyaan untuk GO Klitren",
+  )}`;
+
   const styles = document.createElement("style");
   styles.textContent = `
     .go-mobile-nav {
@@ -50,6 +55,47 @@
       color: #fff;
       background: #006c46;
       outline: none;
+    }
+
+    .go-mobile-nav .go-mobile-contact {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      margin-top: .65rem;
+      padding: .85rem 1rem;
+      color: #fff;
+      background: #006c46;
+      box-shadow: 0 6px 18px rgba(0, 108, 70, .2);
+    }
+
+    .go-mobile-nav .go-mobile-contact:hover,
+    .go-mobile-nav .go-mobile-contact:focus-visible {
+      color: #fff;
+      background: #005236;
+      box-shadow: 0 0 0 3px rgba(0, 108, 70, .18),
+        0 8px 22px rgba(0, 108, 70, .24);
+    }
+
+    .go-mobile-contact__icon {
+      flex: 0 0 auto;
+      font-size: 1.4rem;
+    }
+
+    .go-mobile-contact__copy {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      text-align: left;
+    }
+
+    .go-mobile-contact__label {
+      font: 700 14px/20px Inter, sans-serif;
+    }
+
+    .go-mobile-contact__detail {
+      font: 500 12px/16px Inter, sans-serif;
+      opacity: .9;
+      overflow-wrap: anywhere;
     }
 
     .go-toast {
@@ -145,12 +191,27 @@
     panel.className = "go-mobile-nav";
     panel.setAttribute("aria-label", "Navigasi seluler");
     panel.hidden = true;
-    panel.innerHTML = mainNavigation
+    const navigationLinks = mainNavigation
       .map(
         ({ label, path }) =>
           `<a href="${pageUrl(path)}">${label}</a>`,
       )
       .join("");
+
+    panel.innerHTML = `
+      <div class="go-mobile-nav__links">${navigationLinks}</div>
+      <a
+        class="go-mobile-contact"
+        href="${contactUrl}"
+        aria-label="Hubungi GO Klitren melalui email ${contactEmail}"
+      >
+        <span class="material-symbols-outlined go-mobile-contact__icon" aria-hidden="true">mail</span>
+        <span class="go-mobile-contact__copy">
+          <span class="go-mobile-contact__label">Hubungi Kami</span>
+          <span class="go-mobile-contact__detail">${contactEmail}</span>
+        </span>
+      </a>
+    `;
 
     document.body.append(panel);
     button.type = "button";
@@ -175,12 +236,28 @@
 
       panel.hidden = !shouldOpen;
       button.setAttribute("aria-expanded", String(shouldOpen));
+
+      if (shouldOpen) {
+        window.requestAnimationFrame(() => {
+          panel.querySelector("a, button")?.focus();
+        });
+      }
     });
 
-    panel.addEventListener("click", (event) => event.stopPropagation());
+    panel.addEventListener("click", (event) => {
+      event.stopPropagation();
+
+      if (event.target.closest(".go-mobile-contact")) {
+        closeMenu();
+        button.focus();
+      }
+    });
     document.addEventListener("click", closeMenu);
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeMenu();
+      if (event.key === "Escape" && !panel.hidden) {
+        closeMenu();
+        button.focus();
+      }
     });
   });
 
@@ -202,10 +279,13 @@
     const text = button.textContent.replace(/\s+/g, " ").trim();
 
     if (/hubungi/i.test(text)) {
+      button.setAttribute(
+        "aria-label",
+        `Hubungi GO Klitren melalui email ${contactEmail}`,
+      );
+      button.title = `Kirim email ke ${contactEmail}`;
       button.addEventListener("click", () => {
-        showToast(
-          "Kontak belum diatur. Tambahkan nomor WhatsApp atau alamat email resmi.",
-        );
+        window.location.href = contactUrl;
       });
       return;
     }
